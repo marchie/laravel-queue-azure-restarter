@@ -21,7 +21,9 @@ class ServiceProvider extends LaravelServiceProvider {
      * @return void
      */
     public function boot() {
-        $this->handleConfigs();
+        $configPath = __DIR__ . '/../config/laravel-queue-azure-restarter.php';
+
+        $this->publishes([$configPath => config_path('laravel-queue-azure-restarter.php')]);
     }
 
     /**
@@ -32,6 +34,8 @@ class ServiceProvider extends LaravelServiceProvider {
     public function register() {
         if ($this->pluginEnabled())
         {
+            $configPath = __DIR__ . '/../config/laravel-queue-azure-restarter.php';
+            $this->mergeConfigFrom($configPath, 'laravel-queue-azure-restarter');
             $this->registerHelpers();
             $this->registerCommands();
         }
@@ -57,15 +61,6 @@ class ServiceProvider extends LaravelServiceProvider {
         return [];
     }
 
-    private function handleConfigs() {
-
-        $configPath = __DIR__ . '/../config/laravel-queue-azure-restarter.php';
-
-        $this->publishes([$configPath => config_path('laravel-queue-azure-restarter.php')]);
-
-        $this->mergeConfigFrom($configPath, 'laravel-queue-azure-restarter');
-    }
-
     private function registerHelpers()
     {
         $this->app->bind('Marchie\LaravelAzureQueueRestarter\FlagHelper', function ($app) {
@@ -83,21 +78,25 @@ class ServiceProvider extends LaravelServiceProvider {
 
     private function registerCommands()
     {
-        $this->app->singleton('command.queue.flag', function ($app) {
-            return new RaiseFlagCommand(
-                $app['queue']
-            );
-        });
+        $this->app['command.queue.flag'] = $this->app->share(
+            function ($app) {
+                return new RaiseFlagCommand(
+                    $app['queue']
+                );
+            }
+        );
 
-        $this->app->singleton('command.queue.check', function ($app) {
-            return new SaluteFlagCommand(
-                $app['cache'],
-                $app['carbon'],
-                $app['log'],
-                $app['Marchie\LaravelAzureQueueRestarter\FlagHelper'],
-                $app['Marchie\LaravelAzureQueueRestarter\KuduHelper']
-            );
-        });
+        $this->app['command.queue.check'] = $this->app->share(
+            function ($app) {
+                return new SaluteFlagCommand(
+                    $app['cache'],
+                    $app['carbon'],
+                    $app['log'],
+                    $app['Marchie\LaravelAzureQueueRestarter\FlagHelper'],
+                    $app['Marchie\LaravelAzureQueueRestarter\KuduHelper']
+                );
+            }
+        );
 
         $this->commands('command.queue.flag', 'command.queue.check');
     }
@@ -106,9 +105,9 @@ class ServiceProvider extends LaravelServiceProvider {
     {
         $config = $this->app['config'];
 
-        if ($config->get('laravel-azure-queue-restarter.kuduUser' !== null)
-            || $config->get('laravel-azure-queue-restarter.kuduPass' !== null)
-            || is_int($config->get('laravel-azure-queue-restarter.timeout')))
+        if (($config->get('laravel-queue-azure-restarter.kuduUser') !== null)
+            && ($config->get('laravel-queue-azure-restarter.kuduPass') !== null)
+            && ($config->get('laravel-queue-azure-restarter.timeout') !== null))
         {
             return true;
         }
