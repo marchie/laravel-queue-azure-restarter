@@ -1,0 +1,86 @@
+<?php
+namespace Marchie\LaravelQueueAzureRestarter\Helpers;
+
+use GuzzleHttp\Client;
+
+class KuduHelper
+{
+    /**
+     * @var Client
+     */
+    private $client;
+
+    public function __construct(Client $client)
+    {
+        $this->client = $client;
+    }
+
+    public function killQueueWorkers($connection = null, $queue = null)
+    {
+        $processes = $this->getProcesses();
+
+        $killedProcesses = 0;
+
+        foreach ($processes as $process)
+        {
+            if ($this->isWorkerProcess($process, $connection, $queue))
+            {
+                $this->killProcess($process->id);
+
+                $killedProcesses++;
+            }
+        }
+
+        return $killedProcesses;
+    }
+
+    private function getProcesses()
+    {
+        return json_decode($this->makeRequest('GET', 'api/processes'));
+    }
+
+    private function getProcess($pid)
+    {
+        return json_decode($this->makeRequest('GET', 'api/processes/' . $pid));
+    }
+
+    private function killProcess($pid)
+    {
+        return $this->makeRequest('DELETE', 'api/processes/' . $pid);
+    }
+
+    private function makeRequest($method, $uri)
+    {
+        return $this->client->request($method, 'https://' . $_SERVER['name'] . '/' . $uri, [
+            'auth' => [
+                config('laravel-queue-azure-restarter.kuduUser'),
+                config('laravel-queue-azure-restarter.kuduPass')
+            ]
+        ]);
+    }
+
+    private function isWorkerProcess($process, $connection = null, $queue = null)
+    {
+        $info = $this->getProcess($process->id);
+
+        if (($info->is_webjob === true)
+            && (strpos($info->command_line, 'queue:work') !== false))
+        {
+            if (isset($connection)
+                && (preg_match('/\s' . $connection . '(/s|$)/', $info->command_line) === 0))
+            {
+                return false;
+            }
+
+            if (isset($queue)
+                && (strpos($info->command_line, '--queue="' . $queue . '"') === false))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+}
