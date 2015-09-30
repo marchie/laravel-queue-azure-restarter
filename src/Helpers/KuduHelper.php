@@ -2,6 +2,7 @@
 namespace Marchie\LaravelQueueAzureRestarter\Helpers;
 
 use GuzzleHttp\Client;
+use Marchie\LaravelQueueAzureRestarter\Exceptions\RequestFailedException;
 
 class KuduHelper
 {
@@ -51,12 +52,19 @@ class KuduHelper
 
     private function makeRequest($method, $uri)
     {
-        return $this->client->request($method, 'https://' . $_SERVER['name'] . '/' . $uri, [
+        $request = $this->client->request($method, 'https://' . $_SERVER['name'] . '/' . $uri, [
             'auth' => [
                 config('laravel-queue-azure-restarter.kuduUser'),
                 config('laravel-queue-azure-restarter.kuduPass')
             ]
         ]);
+
+        if ($request->getStatusCode() < 400)
+        {
+            return $request->getBody();
+        }
+
+        throw new RequestFailedException('"' . $method . '" request to "https://' . $_SERVER['name'] . '/' . $uri . '" failed');
     }
 
     private function isWorkerProcess($process, $connection = null, $queue = null)
