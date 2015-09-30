@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "0ddd9688e69f22d0b348ac5c7018ec0e",
-    "content-hash": "feddb9b787228eace86e20c405c1ed84",
+    "hash": "344f1df39466551e7713c31cdf944c83",
+    "content-hash": "2ef0628aeb77ee7501aa9da923c49fb0",
     "packages": [
         {
             "name": "classpreloader/classpreloader",
@@ -1240,12 +1240,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/css-selector.git",
-                "reference": "c5c82f24575372755aa139ea3303d50056c71afa"
+                "reference": "112f8c22683147af3011e8824ab25c54eb1a8fad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/css-selector/zipball/c5c82f24575372755aa139ea3303d50056c71afa",
-                "reference": "c5c82f24575372755aa139ea3303d50056c71afa",
+                "url": "https://api.github.com/repos/symfony/css-selector/zipball/112f8c22683147af3011e8824ab25c54eb1a8fad",
+                "reference": "112f8c22683147af3011e8824ab25c54eb1a8fad",
                 "shasum": ""
             },
             "require": {
@@ -1285,7 +1285,7 @@
             ],
             "description": "Symfony CssSelector Component",
             "homepage": "https://symfony.com",
-            "time": "2015-09-30 09:18:13"
+            "time": "2015-09-30 12:30:29"
         },
         {
             "name": "symfony/debug",
@@ -1348,12 +1348,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dom-crawler.git",
-                "reference": "248322968e010deda0f02536a9e55b2ebc1caa59"
+                "reference": "3936a5e58d110c6898552d35f275f5374043af27"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dom-crawler/zipball/248322968e010deda0f02536a9e55b2ebc1caa59",
-                "reference": "248322968e010deda0f02536a9e55b2ebc1caa59",
+                "url": "https://api.github.com/repos/symfony/dom-crawler/zipball/3936a5e58d110c6898552d35f275f5374043af27",
+                "reference": "3936a5e58d110c6898552d35f275f5374043af27",
                 "shasum": ""
             },
             "require": {
@@ -1393,7 +1393,7 @@
             ],
             "description": "Symfony DomCrawler Component",
             "homepage": "https://symfony.com",
-            "time": "2015-09-29 14:08:28"
+            "time": "2015-09-30 12:30:29"
         },
         {
             "name": "symfony/event-dispatcher",
@@ -1561,12 +1561,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-kernel.git",
-                "reference": "01124e94992ffa82f3cd7a5e23cf433df857838b"
+                "reference": "cd76eca868d2c944a427b963fa86bfe171c1bc51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-kernel/zipball/01124e94992ffa82f3cd7a5e23cf433df857838b",
-                "reference": "01124e94992ffa82f3cd7a5e23cf433df857838b",
+                "url": "https://api.github.com/repos/symfony/http-kernel/zipball/cd76eca868d2c944a427b963fa86bfe171c1bc51",
+                "reference": "cd76eca868d2c944a427b963fa86bfe171c1bc51",
                 "shasum": ""
             },
             "require": {
@@ -1633,7 +1633,7 @@
             ],
             "description": "Symfony HttpKernel Component",
             "homepage": "https://symfony.com",
-            "time": "2015-09-30 09:18:13"
+            "time": "2015-09-30 12:30:29"
         },
         {
             "name": "symfony/process",
@@ -1822,19 +1822,20 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "5d21da6cf991a72a0903c822261395c1637cf5bf"
+                "reference": "2aa7eb933b94166fec60e11832302aa9808868de"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/5d21da6cf991a72a0903c822261395c1637cf5bf",
-                "reference": "5d21da6cf991a72a0903c822261395c1637cf5bf",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/2aa7eb933b94166fec60e11832302aa9808868de",
+                "reference": "2aa7eb933b94166fec60e11832302aa9808868de",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.9"
             },
             "require-dev": {
-                "symfony/phpunit-bridge": "~2.8|~3.0"
+                "symfony/phpunit-bridge": "~2.8|~3.0",
+                "twig/twig": "~1.20|~2.0"
             },
             "suggest": {
                 "ext-symfony_debug": ""
@@ -1873,7 +1874,7 @@
                 "debug",
                 "dump"
             ],
-            "time": "2015-09-27 10:13:28"
+            "time": "2015-09-30 12:30:29"
         },
         {
             "name": "vlucas/phpdotenv",
