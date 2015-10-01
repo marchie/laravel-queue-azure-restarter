@@ -4,11 +4,11 @@
 
 **TL;DR: My queue daemons turned to zombies after a few days, this package kills the zombies**
 
-I use a queue daemon to process tasks such as sending emails from my Laravel applications.  The daemon has been set up as a *continuous webjob* on Azure, so if it goes down, Azure starts it back up again immediately (this is the same functionality as *Supervisord* would provide on *nix).  However, the daemon is a long-running process and I found that there were a few problems; for example, after a short while I would get SSL errors when connecting to the external mail server.  These were resolved by setting up a *scheduled webjob* to issue a `php artisan queue:restart` command periodically; it's a bit hacky, but it does the job.
+I use a queue daemon to process tasks such as sending emails from my Laravel applications.  The daemon has been set up as a *continuous webjob* on Azure, so if it goes down, Azure starts it back up again immediately (this is the same functionality as *Supervisord* would provide on \*nix).  However, the daemon is a long-running process and I found that there were a few problems; for example, after a short while I would get SSL errors when connecting to the external mail server.  These were resolved by setting up a *scheduled webjob* to issue a `php artisan queue:restart` command periodically; it's a bit hacky, but it does the job.
 
 So, everything was great... until it wasn't! A horrible discovery awaited me one Monday morning: a weekend's worth of mail was in the queue, waiting to be processed.  **What the hell?!** I checked the queue daemon on Azure and... *it was running?*  I delved further.  At some stage in the early hours of the previous Saturday, the daemon had stopped reacting to the restart command and it just sat there, idle.  The process had not stopped, so Azure didn't know that it needed restarting, but it was doing *nothing*.  The process had a pulse, but no brain activity.
 
-I searched around; had anyone else seen this?  It turns out that it was uncommon, but not unprecedented (e.g. laravel/framework#4443).  Indeed, further searching suggested that is could be something to do with PHP's `sleep()` function itself.
+I searched around; had anyone else seen this?  It turns out that it was uncommon, but not unprecedented (e.g. [laravel/framework#4443](https://github.com/laravel/framework/issues/4443)).  Indeed, further searching suggested that is could be something to do with PHP's `sleep()` function itself.
 
 So, I needed a way of checking that the queue daemon was not only still running, but also *functioning*.  Then, if the daemon turned into a zombie, I needed the queue to be restarted *automatically* (I like my weekends to be my own!).
 
