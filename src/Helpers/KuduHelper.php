@@ -77,7 +77,8 @@ class KuduHelper
         if (strpos('php', $process->name) === 0) {
             $info = $this->getProcess($process->id);
 
-            if (($info->is_webjob === true)
+            if (isset($info->is_webjob, $info->command_line)
+                && ($info->is_webjob === true)
                 && (strpos($info->command_line, 'queue:work') !== false)
             ) {
                 if (isset($connection)
