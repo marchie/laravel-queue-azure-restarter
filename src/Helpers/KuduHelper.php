@@ -54,12 +54,22 @@ class KuduHelper
 
     private function makeRequest($method, $uri)
     {
-        return $this->client->request($method, 'https://' . config('laravel-queue-azure-restarter.azureInstance') . '.scm.azurewebsites.net/' . $uri, [
+        $url = 'https://' . config('laravel-queue-azure-restarter.azureInstance') . '.scm.azurewebsites.net/' . $uri;
+        $options = [
             'auth' => [
                 config('laravel-queue-azure-restarter.kuduUser', env('KUDU_USER')),
                 config('laravel-queue-azure-restarter.kuduPass', env('KUDU_PASS'))
             ]
-        ]);
+        ];
+
+        // GuzzleHTTP v6+
+        if (method_exists($this->client, 'request')) {
+            return $this->client->request(strtoupper($method), $url, $options);
+        }
+        // GuzzleHTTP v5
+        else {
+            return $this->client->{strtolower($method)}($url, $options);
+        }
     }
 
     private function isWorkerProcess($process, $connection = null, $queue = null)
