@@ -84,3 +84,9 @@ The webjob can be executed as frequently as you wish.  The command reads the tim
 ## A Note About Failure
 
 When the queue daemon has failed and the process is terminated, the package throws an `UnresponsiveQueueWorkerException`.  Depending on how your application handles exceptions, this can be used to record incidents where the queue daemon has failed, notify administrators, etc.
+
+## Issues
+
+### cURL error 60: SSL certificate problem: unable to get local issuer certificate
+
+The Azure webapps do not have a certificate bundle set up by default, so you need to set that up in order to access the Kudu API.  You can find out how to do this at http://blogs.msdn.com/b/azureossds/archive/2015/06/12/verify-peer-certificate-from-php-curl-for-azure-apps.aspx
