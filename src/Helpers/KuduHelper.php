@@ -54,7 +54,7 @@ class KuduHelper
 
     private function makeRequest($method, $uri)
     {
-        return $this->client->request($method, 'https://' . config('laravel-queue-azure-restarter.scm') . '.scm.azurewebsites.net/' . $uri, [
+        return $this->client->request($method, 'https://' . config('laravel-queue-azure-restarter.azureInstance') . '.scm.azurewebsites.net/' . $uri, [
             'auth' => [
                 config('laravel-queue-azure-restarter.kuduUser', env('KUDU_USER')),
                 config('laravel-queue-azure-restarter.kuduPass', env('KUDU_PASS'))
