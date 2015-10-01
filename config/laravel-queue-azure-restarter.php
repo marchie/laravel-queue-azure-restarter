@@ -2,6 +2,12 @@
 
 return [
     /**
+     * The Azure instance name
+     * https://[instance].scm.azurewebsites.net
+     */
+    'azureInstance' => env('AZURE_INSTANCE', null),
+
+    /**
      * Credentials to log in to kudu
      * See: https://github.com/projectkudu/kudu/wiki/Deployment-credentials
      */
@@ -12,5 +18,5 @@ return [
      * If this time has elapsed since the queue processed the flag job
      * then the queue has failed and will be restarted
      */
-    'timeout' => env('QUEUE_FAIL_TIMEOUT', null)
+    'queueFailTimeout' => env('QUEUE_FAIL_TIMEOUT', null)
 ];

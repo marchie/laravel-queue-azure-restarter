@@ -1,78 +1,82 @@
-# Boilerplate Laravel 5 Package
+# Laravel Queue Azure Restarter
 
-## Installation
+## What is this package for?
 
-Clone this repo with minimal history:
+**TL;DR: My queue daemons turned to zombies after a few days, this package kills the zombies**
 
-```sh
-git clone --depth 1 git@github.com:cviebrock/laravel5-package-template.git
+I use a queue daemon to process tasks such as sending emails from my Laravel applications.  The daemon has been set up as a *continuous webjob* on Azure, so if it goes down, Azure starts it back up again immediately (this is the same functionality as *Supervisord* would provide on *nix).  However, the daemon is a long-running process and I found that there were a few problems; for example, after a short while I would get SSL errors when connecting to the external mail server.  These were resolved by setting up a *scheduled webjob* to issue a `php artisan queue:restart` command periodically; it's a bit hacky, but it does the job.
+
+So, everything was great... until it wasn't! A horrible discovery awaited me one Monday morning: a weekend's worth of mail was in the queue, waiting to be processed.  **What the hell?!** I checked the queue daemon on Azure and... *it was running?*  I delved further.  At some stage in the early hours of the previous Saturday, the daemon had stopped reacting to the restart command and it just sat there, idle.  The process had not stopped, so Azure didn't know that it needed restarting, but it was doing *nothing*.  The process had a pulse, but no brain activity.
+
+I searched around; had anyone else seen this?  It turns out that it was uncommon, but not unprecedented (e.g. laravel/framework#4443).  Indeed, further searching suggested that is could be something to do with PHP's `sleep()` function itself.
+
+So, I needed a way of checking that the queue daemon was not only still running, but also *functioning*.  Then, if the daemon turned into a zombie, I needed the queue to be restarted *automatically* (I like my weekends to be my own!).
+
+Happily, the solution lay with the Kudu API on Azure.  [The API allows us to get information about the processes running on the server and, importantly, terminate them!](https://github.com/projectkudu/kudu/wiki/Process-Threads-list-and-minidump-gcdump-diagsession)
+
+And so, this package was born!
+
+## Laravel Installation and Configuration
+
+Add the following to the require section of your application's *composer.json* file:
+
+```
+"marchie\laravel-queue-azure-restarter": "dev-master"
 ```
 
-Rename the directory and re-init it as your own package:
+Run **composer update** to install the package.
 
-```sh
-mv laravel5-package-template my-package
-cd my-package
-rm -rf .git
-git init
+Now, add the service provider to the providers array in Laravel's *config/app.php* file:
+
+```
+Marchie\LaravelQueueAzureRestarter\ServiceProvider::class
 ```
 
+Now the package needs to be configured.  The following keys and values need to be added to your application's *.env* file:
 
-## Configuration
+- **KUDU_USER** The username to access the Kudu API
+- **KUDU_PASS** The password to access the Kudu API
+- **AZURE_INSTANCE** The name of your Azure instance; *i.e.* https://**[instance]**.scm.azurewebsites.net
+- **QUEUE_FAIL_TIMEOUT** The time that needs to have passed before the queue has timed out, e.g. `20 minutes`, `1 hour`, etc.
 
-The boilerplate files provide a scaffold for building your own package.  You'll need to make a bunch of changes to the files we've provided to make it your own.
+([More information on Kudu credentials](https://github.com/projectkudu/kudu/wiki/Accessing-the-kudu-service))
 
+Alternatively, you can publish the configuration using the `php artisan vendor:publish` command and edit the values in the *config/laravel-queue-azure-restarter.php* file.
 
-### composer.json
+You can test that your application can connect to Kudu using `php artisan kudu:test`.
 
-Edit `composer.json` to reflect your package information.  At a minimum, you will need to change the package name and autoload lines so that "vendor/package" reflects your new package's name and namespace.
+That's the Laravel bit done...
 
-```json
-{
-    "name": "vendor/package",
-    ...
-    "autoload": {
-        "psr-4": {
-            "Vendor\\Package\\": "src/"
-        }
-    },
-    ...
-},
+## Azure Configuration
+
+We need to configure two *scheduled webjobs*.  The first will push a job onto the queue that sets the current timestamp value in Laravel's cache.  The second job will read this timestamp value and check the time that has passed since.  If more time has passed than the **QUEUE_FAIL_TIMEOUT** value set in the configuration, then the queue daemon process will be killed using the Kudu API.  As you have set up the queue daemon as a *continuous webjob*, Azure will see that it is dead and automatically restart it!
+
+### The First Webjob: queue:flag
+
+The first webjob needs to execute the following command:
+
+```
+php artisan queue:flag --queue=[QUEUE] <connection>
 ```
 
+The `<connection>` argument specifies the driver used by the queue; it defaults to the value you have set in Laravel's `config/queue.php` file.
 
-### config/packagename.php
+The `--queue=[QUEUE]` option specifies the name of the queue; it defaults to *null* if you are not using named queues.
 
-Rename `config/packagename.php` to something more useful, like `config/my-package.php`.  This is the configuration file that Laravel will publish into it's `config` directory.  Laravel 5 doesn't use the `config/packages/vendor/...` structure that Laravel 4 did, so pick a file name that's not likely to conflict with existing configuration files.
+The webjob pushes a job onto the queue which then sets a value containing the current timestamp.
 
+This webjob needs to be executed more frequently than the **QUEUE_FAIL_TIMEOUT** value we set in the configuration; e.g. if your QUEUE_FAIL_TIMEOUT value is '20 minutes', the webjob must be executed every 19 minutes or less.
 
-### src/ServiceProvider.php
+### The Second Webjob: queue:check
 
-Open up `src/ServiceProvider.php` as well.  At a minimum you'll need to change the namespace at the top of the file (it needs to match the PSR-4 namespace you set in `composer.json`).
+The second webjob needs to execute the following command:
 
-In the `boot()` method, comment out or uncomment the components your package will need.  For example, if your package only has a configuration, then you can comment out everything except the `handleConfigs()` call:
-
-```php
-public function boot() {
-    $this->handleConfigs();
-    // $this->handleMigrations();
-    // $this->handleViews();
-    // $this->handleTranslations();
-    // $this->handleRoutes();
-}
+```
+php artisan queue:check --queue=[QUEUE] <connection>
 ```
 
-In the `handleConfigs()` method, you'll want to change the "packagename" references to the name you chose up above (in the [config/packagename.php] instructions).
+The `<connection>` argument specifies the driver used by the queue; it defaults to the value you have set in Laravel's `config/queue.php` file.
 
-For the other methods, again change instances of "vendor" and "packagename" to your package's name.
+The `--queue=[QUEUE]` option specifies the name of the queue; it defaults to *null* if you are not using named queues.
 
-
-### Last Steps
-
-Update the `LICENSE` file as required (make sure it matches what you said your package's license is in `composer.json`).
-
-Finally, edit this `README.md` file and replace it with a description of your own, awesome Laravel 5 package.
-
-Commit everything to your (newly initialized) git repo, and push it wherever you'll keep your package (Github, etc.).
-
-Enjoy coding!
+The webjob can be executed as frequently as you wish.  The command reads the timestamp value stored in the cache by the `queue:flag` command and works out the amount of time that has passed.  If more time has passed than the **QUEUE_FAIL_TIMEOUT** value, the zombie queue daemon process is hunted down and terminated using the Kudu API.

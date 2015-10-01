@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Logging\Log;
+use Illuminate\Queue\QueueManager;
 use Marchie\LaravelQueueAzureRestarter\Exceptions\QueueProcessesNotKilledException;
 use Marchie\LaravelQueueAzureRestarter\Exceptions\UnresponsiveQueueWorkerException;
 use Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper;
@@ -12,7 +13,7 @@ use Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class SaluteFlagCommand extends Command
+class CheckQueueCommand extends Command
 {
     /**
      * The console command name.
@@ -48,15 +49,20 @@ class SaluteFlagCommand extends Command
      * @var KuduHelper
      */
     private $kuduHelper;
+    /**
+     * @var QueueManager
+     */
+    private $queueManager;
 
 
-    public function __construct(Cache $cache, Carbon $carbon, Log $log, FlagHelper $flagHelper, KuduHelper $kuduHelper)
+    public function __construct(Cache $cache, Carbon $carbon, Log $log, FlagHelper $flagHelper, KuduHelper $kuduHelper, QueueManager $queueManager)
     {
         $this->cache = $cache;
         $this->carbon = $carbon;
         $this->log = $log;
         $this->flagHelper = $flagHelper;
         $this->kuduHelper = $kuduHelper;
+        $this->queueManager = $queueManager;
         parent::__construct();
     }
 
@@ -78,19 +84,21 @@ class SaluteFlagCommand extends Command
             $killedWorkers = $this->kuduHelper->killQueueWorkers($connection, $queue);
 
             if ($killedWorkers === 0) {
-                throw new QueueProcessesNotKilledException('The "' . $this->flagHelper->getQueueName() . '" queue on connection "' . $this->flagHelper->getConnectionName() . '" is unresponsive, but the process could not be terminated.');
+                throw new QueueProcessesNotKilledException('The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" is unresponsive, but the process could not be terminated.');
             }
 
-            $infoString = 'The "' . $this->flagHelper->getQueueName() . '" queue on connection "' . $this->flagHelper->getConnectionName() . '" was unresponsive. ' . $killedWorkers . ' process';
+            $infoString = 'The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" was unresponsive. ' . $killedWorkers . ' process';
 
             if ($killedWorkers > 1)
             {
-                $infoString .= 'es';
+                $infoString .= 'es were';
+            }
+            else
+            {
+                $infoString .= ' was';
             }
 
-            $infoString .= ' were terminated.';
-
-            $this->info($infoString);
+            $infoString .= ' terminated.';
 
             throw new UnresponsiveQueueWorkerException($infoString);
         }
@@ -104,7 +112,7 @@ class SaluteFlagCommand extends Command
     protected function getArguments()
     {
         return [
-            ['connection', InputArgument::OPTIONAL, 'The name of connection', null],
+            ['connection', InputArgument::OPTIONAL, 'The name of connection', $this->queueManager->getDefaultDriver()],
         ];
     }
 
@@ -124,7 +132,7 @@ class SaluteFlagCommand extends Command
     {
         $lastRaised = $this->carbon->createFromTimestamp($flag);
 
-        $threshold = $this->carbon->parse('-' . config('laravel-queue-azure-restarter.timeout'));
+        $threshold = $this->carbon->parse('-' . config('laravel-queue-azure-restarter.queueFailTimeout', env('QUEUE_FAIL_TIMEOUT')));
 
         return $lastRaised->lt($threshold);
     }

@@ -7,7 +7,7 @@ use Marchie\LaravelQueueAzureRestarter\Jobs\RaiseFlagJob;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class RaiseFlagCommand extends Command
+class EnqueueFlagCommand extends Command
 {
     /**
      * The console command name.

@@ -1,7 +1,7 @@
 {
   "name": "marchie/laravel-queue-azure-restarter",
   "description": "Restart Laravel queue workers on Azure when they fail",
-  "keywords": [],
+  "keywords": ["laravel", "queue", "azure", "fail", "hang", "zombie", "kill"],
   "license": "MIT",
   "authors": [
     {
@@ -24,8 +24,5 @@
       "Marchie\\LaravelQueueAzureRestarter\\": "src/"
     }
   },
-  "minimum-stability": "dev",
-  "config": {
-    "preferred-install": "dist"
-  }
+  "minimum-stability": "dev"
 }

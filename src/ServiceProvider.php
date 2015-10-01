@@ -1,8 +1,9 @@
 <?php namespace Marchie\LaravelQueueAzureRestarter;
 
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
-use Marchie\LaravelQueueAzureRestarter\Console\RaiseFlagCommand;
-use Marchie\LaravelQueueAzureRestarter\Console\SaluteFlagCommand;
+use Marchie\LaravelQueueAzureRestarter\Console\EnqueueFlagCommand;
+use Marchie\LaravelQueueAzureRestarter\Console\CheckQueueCommand;
+use Marchie\LaravelQueueAzureRestarter\Console\TestKuduCommand;
 use Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper;
 use Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper;
 
@@ -53,6 +54,7 @@ class ServiceProvider extends LaravelServiceProvider {
             return [
                 'command.queue.flag',
                 'command.queue.check',
+                'command.kudu.test',
                 'Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper',
                 'Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper'
             ];
@@ -80,7 +82,7 @@ class ServiceProvider extends LaravelServiceProvider {
     {
         $this->app['command.queue.flag'] = $this->app->share(
             function ($app) {
-                return new RaiseFlagCommand(
+                return new EnqueueFlagCommand(
                     $app['queue']
                 );
             }
@@ -88,27 +90,36 @@ class ServiceProvider extends LaravelServiceProvider {
 
         $this->app['command.queue.check'] = $this->app->share(
             function ($app) {
-                return new SaluteFlagCommand(
+                return new CheckQueueCommand(
                     $app['Illuminate\Contracts\Cache\Repository'],
                     $app['Carbon\Carbon'],
                     $app['log'],
                     $app['Marchie\LaravelAzureQueueRestarter\FlagHelper'],
+                    $app['Marchie\LaravelAzureQueueRestarter\KuduHelper'],
+                    $app['queue']
+                );
+            }
+        );
+
+        $this->app['command.kudu.test'] = $this->app->share(
+            function ($app) {
+                return new TestKuduCommand(
                     $app['Marchie\LaravelAzureQueueRestarter\KuduHelper']
                 );
             }
         );
 
-        $this->commands('command.queue.flag', 'command.queue.check');
+        $this->commands('command.queue.flag', 'command.queue.check', 'command.kudu.test');
     }
 
     private function pluginEnabled()
     {
         $config = $this->app['config'];
 
-        if (($config->get('laravel-queue-azure-restarter.kuduUser') !== null)
-            && ($config->get('laravel-queue-azure-restarter.kuduPass') !== null)
-            && ($config->get('laravel-queue-azure-restarter.scm') !== null)
-            && ($config->get('laravel-queue-azure-restarter.timeout') !== null))
+        if (($config->get('laravel-queue-azure-restarter.kuduUser', env('KUDU_USER')) !== null)
+            && ($config->get('laravel-queue-azure-restarter.kuduPass', env('KUDU_PASS')) !== null)
+            && ($config->get('laravel-queue-azure-restarter.azureInstance', env('AZURE_INSTANCE')) !== null)
+            && ($config->get('laravel-queue-azure-restarter.queueFailTimeout', env('QUEUE_FAIL_TIMEOUT')) !== null))
         {
             return true;
         }
