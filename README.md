@@ -80,3 +80,7 @@ The `<connection>` argument specifies the driver used by the queue; it defaults 
 The `--queue=[QUEUE]` option specifies the name of the queue; it defaults to *null* if you are not using named queues.
 
 The webjob can be executed as frequently as you wish.  The command reads the timestamp value stored in the cache by the `queue:flag` command and works out the amount of time that has passed.  If more time has passed than the **QUEUE_FAIL_TIMEOUT** value, the zombie queue daemon process is hunted down and terminated using the Kudu API.
+
+## A Note About Failure
+
+When the queue daemon has failed and the process is terminated, the package throws an `UnresponsiveQueueWorkerException`.  Depending on how your application handles exceptions, this can be used to record incidents where the queue daemon has failed, notify administrators, etc.
