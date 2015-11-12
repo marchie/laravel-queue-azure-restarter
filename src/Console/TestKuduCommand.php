@@ -8,6 +8,8 @@ use Symfony\Component\Console\Input\InputArgument;
 
 class TestKuduCommand extends Command
 {
+    use PluginEnabledTrait;
+
     /**
      * The console command name.
      *
@@ -43,9 +45,12 @@ class TestKuduCommand extends Command
      */
     public function fire()
     {
-        if ($this->kuduHelper->testConnection())
-        {
-            $this->info('Connection test to Kudu was successful!');
+        if ($this->pluginEnabled()) {
+            if ($this->kuduHelper->testConnection()) {
+                $this->info('Connection test to Kudu was successful!');
+            }
         }
+
+        $this->info('The plugin is not enabled - please check your .env settings');
     }
 }

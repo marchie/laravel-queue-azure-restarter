@@ -33,13 +33,10 @@ class ServiceProvider extends LaravelServiceProvider {
      * @return void
      */
     public function register() {
-        if ($this->pluginEnabled())
-        {
-            $configPath = __DIR__ . '/../config/laravel-queue-azure-restarter.php';
-            $this->mergeConfigFrom($configPath, 'laravel-queue-azure-restarter');
-            $this->registerHelpers();
-            $this->registerCommands();
-        }
+        $configPath = __DIR__ . '/../config/laravel-queue-azure-restarter.php';
+        $this->mergeConfigFrom($configPath, 'laravel-queue-azure-restarter');
+        $this->registerHelpers();
+        $this->registerCommands();
     }
 
     /**
@@ -49,18 +46,13 @@ class ServiceProvider extends LaravelServiceProvider {
      */
     public function provides()
     {
-        if ($this->pluginEnabled())
-        {
-            return [
-                'command.queue.flag',
-                'command.queue.check',
-                'command.kudu.test',
-                'Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper',
-                'Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper'
-            ];
-        }
-
-        return [];
+        return [
+            'command.queue.flag',
+            'command.queue.check',
+            'command.kudu.test',
+            'Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper',
+            'Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper'
+        ];
     }
 
     private function registerHelpers()
@@ -110,20 +102,5 @@ class ServiceProvider extends LaravelServiceProvider {
         );
 
         $this->commands('command.queue.flag', 'command.queue.check', 'command.kudu.test');
-    }
-
-    private function pluginEnabled()
-    {
-        $config = $this->app['config'];
-
-        if (($config->get('laravel-queue-azure-restarter.kuduUser', env('KUDU_USER')) !== null)
-            && ($config->get('laravel-queue-azure-restarter.kuduPass', env('KUDU_PASS')) !== null)
-            && ($config->get('laravel-queue-azure-restarter.azureInstance', env('AZURE_INSTANCE')) !== null)
-            && ($config->get('laravel-queue-azure-restarter.queueFailTimeout', env('QUEUE_FAIL_TIMEOUT')) !== null))
-        {
-            return true;
-        }
-
-        return false;
     }
 }
