@@ -102,6 +102,8 @@ class CheckQueueCommand extends Command
 
                 throw new UnresponsiveQueueWorkerException($infoString);
             }
+
+            return;
         }
 
         throw new PluginNotEnabledException('The plugin is not enabled - please check your .env settings');

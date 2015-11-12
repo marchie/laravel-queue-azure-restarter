@@ -52,6 +52,8 @@ class EnqueueFlagCommand extends Command
             $job = (new RaiseFlagJob($connection, $queue))->onQueue($queue);
 
             $this->queueManager->connection($connection)->push($job);
+
+            return;
         }
 
         throw new PluginNotEnabledException('The plugin is not enabled - please check your .env settings');
