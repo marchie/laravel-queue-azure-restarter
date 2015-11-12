@@ -49,6 +49,8 @@ class TestKuduCommand extends Command
             if ($this->kuduHelper->testConnection()) {
                 $this->info('Connection test to Kudu was successful!');
             }
+			
+			return;
         }
 
         $this->info('The plugin is not enabled - please check your .env settings');
