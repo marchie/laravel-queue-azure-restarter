@@ -3,7 +3,6 @@ namespace Marchie\LaravelQueueAzureRestarter\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Queue\QueueManager;
-use Marchie\LaravelQueueAzureRestarter\Exceptions\PluginNotEnabledException;
 use Marchie\LaravelQueueAzureRestarter\Jobs\RaiseFlagJob;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -44,19 +43,15 @@ class EnqueueFlagCommand extends Command
      */
     public function fire()
     {
-        if ($this->pluginEnabled()) {
-            $queue = $this->option('queue');
+        $this->pluginEnabled();
 
-            $connection = $this->argument('connection');
+        $queue = $this->option('queue');
 
-            $job = (new RaiseFlagJob($connection, $queue))->onQueue($queue);
+        $connection = $this->argument('connection');
 
-            $this->queueManager->connection($connection)->push($job);
+        $job = (new RaiseFlagJob($connection, $queue))->onQueue($queue);
 
-            return;
-        }
-
-        throw new PluginNotEnabledException('The plugin is not enabled - please check your .env settings');
+        $this->queueManager->connection($connection)->push($job);
     }
 
     /**

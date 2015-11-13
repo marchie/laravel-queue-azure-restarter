@@ -2,6 +2,7 @@
 namespace Marchie\LaravelQueueAzureRestarter\Console;
 
 use Illuminate\Support\Facades\Config;
+use Marchie\LaravelQueueAzureRestarter\Exceptions\PluginNotEnabledException;
 
 trait PluginEnabledTrait
 {
@@ -15,6 +16,6 @@ trait PluginEnabledTrait
             return true;
         }
 
-        return false;
+        throw new PluginNotEnabledException('The plugin is not enabled - please check your .env settings');
     }
 }

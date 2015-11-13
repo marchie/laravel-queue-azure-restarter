@@ -2,6 +2,7 @@
 namespace Marchie\LaravelQueueAzureRestarter\Console;
 
 use Illuminate\Console\Command;
+use Marchie\LaravelQueueAzureRestarter\Exceptions\PluginNotEnabledException;
 use Marchie\LaravelQueueAzureRestarter\Helpers\KuduHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -45,14 +46,14 @@ class TestKuduCommand extends Command
      */
     public function fire()
     {
-        if ($this->pluginEnabled()) {
+        try {
+            $this->pluginEnabled();
+
             if ($this->kuduHelper->testConnection()) {
                 $this->info('Connection test to Kudu was successful!');
             }
-			
-			return;
+        } catch (PluginNotEnabledException $e) {
+            $this->info($e->getMessage());
         }
-
-        $this->info('The plugin is not enabled - please check your .env settings');
     }
 }

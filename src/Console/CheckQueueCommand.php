@@ -6,7 +6,6 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Queue\QueueManager;
-use Marchie\LaravelQueueAzureRestarter\Exceptions\PluginNotEnabledException;
 use Marchie\LaravelQueueAzureRestarter\Exceptions\QueueProcessesNotKilledException;
 use Marchie\LaravelQueueAzureRestarter\Exceptions\UnresponsiveQueueWorkerException;
 use Marchie\LaravelQueueAzureRestarter\Helpers\FlagHelper;
@@ -76,37 +75,33 @@ class CheckQueueCommand extends Command
      */
     public function fire()
     {
-        if ($this->pluginEnabled()) {
-            $queue = $this->option('queue');
+        $this->pluginEnabled();
 
-            $connection = $this->argument('connection');
+        $queue = $this->option('queue');
 
-            $flag = $this->cache->get($this->flagHelper->getFlagName($connection, $queue), 0);
+        $connection = $this->argument('connection');
 
-            if ($this->flagIsDown($flag)) {
-                $killedWorkers = $this->kuduHelper->killQueueWorkers($connection, $queue);
+        $flag = $this->cache->get($this->flagHelper->getFlagName($connection, $queue), 0);
 
-                if ($killedWorkers === 0) {
-                    throw new QueueProcessesNotKilledException('The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" is unresponsive, but the process could not be terminated.');
-                }
+        if ($this->flagIsDown($flag)) {
+            $killedWorkers = $this->kuduHelper->killQueueWorkers($connection, $queue);
 
-                $infoString = 'The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" was unresponsive. ' . $killedWorkers . ' process';
-
-                if ($killedWorkers > 1) {
-                    $infoString .= 'es were';
-                } else {
-                    $infoString .= ' was';
-                }
-
-                $infoString .= ' terminated.';
-
-                throw new UnresponsiveQueueWorkerException($infoString);
+            if ($killedWorkers === 0) {
+                throw new QueueProcessesNotKilledException('The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" is unresponsive, but the process could not be terminated.');
             }
 
-            return;
-        }
+            $infoString = 'The "' . $this->flagHelper->getQueueName($queue) . '" queue on connection "' . $this->flagHelper->getConnectionName($connection) . '" was unresponsive. ' . $killedWorkers . ' process';
 
-        throw new PluginNotEnabledException('The plugin is not enabled - please check your .env settings');
+            if ($killedWorkers > 1) {
+                $infoString .= 'es were';
+            } else {
+                $infoString .= ' was';
+            }
+
+            $infoString .= ' terminated.';
+
+            throw new UnresponsiveQueueWorkerException($infoString);
+        }
     }
 
     /**
